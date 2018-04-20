@@ -14,6 +14,8 @@ func NewCxiCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	}
 
 	cmds.AddCommand(NewCmdCluster(in, out, err))
+	cmds.AddCommand(NewCmdTenant(in, out, err))
+	cmds.AddCommand(NewCmdUser(in, out, err))
 	return cmds
 }
 

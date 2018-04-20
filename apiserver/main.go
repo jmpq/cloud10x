@@ -7,6 +7,8 @@ func main() {
 
 	v1 := app.Party("/v1")
 
+	v1.Get("/VCode/{phone}", apiVCodeRequest)
+
 	v1.Get("/Tenants", apiTenantList)
 	v1.Get("/Tenants/{id}", apiTenantGet)
 	v1.Post("/Tenants", apiTenantPost)

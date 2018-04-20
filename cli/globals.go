@@ -3,5 +3,5 @@ package main
 var (
 	gTenantName   string
 	gTenantSecret string
-	gRemoteUrl    = "http://api.cloud10x.cn"
+	gRemoteUrl    = "http://localhost:8080"
 )

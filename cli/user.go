@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
+	//"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jmpq/cloudx/v1"
+	"github.com/jmpq/cloud10x/v1"
 	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
@@ -71,7 +71,7 @@ func userCreate(cmd *cobra.Command, args []string, org, department, phoneNum, em
 
 	data, _ := json.Marshal(req)
 
-	resp, err := doPostRequest(url+"/v1/Users", bytes.NewReader(data), tenant, secret)
+	resp, err := doPostRequest(url+"/v1/Users", string(data), tenant, secret)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "response %v", resp)
 		os.Exit(-1)

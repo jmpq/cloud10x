@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
+	//	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jmpq/cloudx/v1"
+	"github.com/jmpq/cloud10x/v1"
 	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
@@ -37,6 +37,18 @@ func NewCmdTenant(in io.Reader, out, err io.Writer) *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Please specify the tenant's name\n")
 				os.Exit(-1)
 			}
+			if phoneNum == "" {
+				fmt.Fprintf(os.Stderr, "Mobile phone number must not be empty\n")
+				os.Exit(-1)
+			}
+			if vcode == "" {
+				fmt.Fprintf(os.Stderr, "Verification code must not be empty\n")
+				os.Exit(-1)
+			}
+			if password == "" {
+				fmt.Fprintf(os.Stderr, "Password must not be empty\n")
+				os.Exit(-1)
+			}
 			tenantCreate(cmd, args, org, phoneNum, email, password, vcode)
 		},
 	}
@@ -67,21 +79,15 @@ func NewCmdTenant(in io.Reader, out, err io.Writer) *cobra.Command {
 
 func tenantRequestVCode(cmd *cobra.Command, args []string) {
 	url := gRemoteUrl
-	phoneNum := args[1]
+	phoneNum := args[0]
 
-	req := v1.TenantRequestVCodeReq{
-		PhoneNum: phoneNum,
-	}
-
-	data, _ := json.Marshal(req)
-
-	resp, err := doPostRequest(url+"/v1/VCode", bytes.NewReader(data), "", "")
+	resp, err := doGetRequest(url+"/v1/VCode/"+phoneNum, "", "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "response %v", resp)
 		os.Exit(-1)
 	}
 
-	fmt.Printf("Verification code was sent to %s", phoneNum)
+	fmt.Printf("Verification code was sent to %s.\n", phoneNum)
 }
 
 func tenantCreate(cmd *cobra.Command, args []string, org, phoneNum, email, password, vcode string) {
@@ -99,7 +105,7 @@ func tenantCreate(cmd *cobra.Command, args []string, org, phoneNum, email, passw
 
 	data, _ := json.Marshal(req)
 
-	resp, err := doPostRequest(url+"/v1/Tenants", bytes.NewReader(data), "", "")
+	resp, err := doPostRequest(url+"/v1/Tenants", string(data), "", "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "response %v", resp)
 		os.Exit(-1)
@@ -111,5 +117,5 @@ func tenantCreate(cmd *cobra.Command, args []string, org, phoneNum, email, passw
 	body, err := ioutil.ReadAll(resp.Body)
 
 	err = json.Unmarshal([]byte(body), r)
-	fmt.Printf("Tenant %s was created, secret: %s, please save your secret in a safe place.", tenantName, r.Secret)
+	fmt.Printf("Tenant %s was created, secret: %s, please save your secret in a safe place.\n", tenantName, r.Secret)
 }
