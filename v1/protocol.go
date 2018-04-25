@@ -1,10 +1,10 @@
 package v1
 
 type TenantInfo struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Company string `json:"company"`
-	Phone   string `json:"phone"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Org      string `json:"org"`
+	PhoneNum string `json:"phone"`
 }
 
 type UserInfo struct {
@@ -24,7 +24,7 @@ type TenantRequestVCodeResp struct {
 
 type TenantCreateReq struct {
 	Name     string `json:"name"`
-	Company  string `json:"company"`
+	Org      string `json:"org"`
 	PhoneNum string `json:"phonenum"`
 	Email    string `json:"email"`
 	VCode    string `json:"vcode"`

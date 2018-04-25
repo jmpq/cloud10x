@@ -97,6 +97,7 @@ func tenantCreate(cmd *cobra.Command, args []string, org, phoneNum, email, passw
 
 	req := v1.TenantCreateReq{
 		Name:     tenantName,
+		Org:      org,
 		PhoneNum: phoneNum,
 		Email:    email,
 		Password: password,
@@ -117,5 +118,10 @@ func tenantCreate(cmd *cobra.Command, args []string, org, phoneNum, email, passw
 	body, err := ioutil.ReadAll(resp.Body)
 
 	err = json.Unmarshal([]byte(body), r)
+
+	if resp.StatusCode != 200 {
+		fmt.Fprintf(os.Stderr, "Status code %d, Error: %s\n", resp.StatusCode, r.Message)
+		os.Exit(-1)
+	}
 	fmt.Printf("Tenant %s was created, secret: %s, please save your secret in a safe place.\n", tenantName, r.Secret)
 }

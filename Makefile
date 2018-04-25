@@ -1,6 +1,6 @@
 all:
 	cd apiserver && go build -o ../cxserver
-	cd cli && go build -o ../cxi
+	cd adm && go build -o ../cxadm
 
 clean:
-	rm cxserver cxi
+	rm cxserver cxadm

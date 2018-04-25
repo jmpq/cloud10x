@@ -4,6 +4,8 @@ import (
 	//"bytes"
 	"encoding/json"
 	"fmt"
+	admapi "github.com/jmpq/cloud10x/adm/api"
+	"github.com/jmpq/cloud10x/adm/certs"
 	"github.com/jmpq/cloud10x/v1"
 	"github.com/spf13/cobra"
 	"io"
@@ -36,8 +38,7 @@ func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
 	clusterCmd.AddCommand(createCmd)
 
 	var (
-		token      string
-		publicAddr string
+		cluster string
 	)
 
 	joinCmd := &cobra.Command{
@@ -48,11 +49,11 @@ func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Please specify cluster's name")
 				os.Exit(-1)
 			}
-			clusterJoin(cmd, args, publicAddr)
+			clusterJoin(cmd, args, cluster)
 		},
 	}
 
-	joinCmd.Flags().StringVar(&publicAddr, "ip", token, "Public IP address of the host")
+	joinCmd.Flags().StringVar(&cluster, "cluster", cluster, "Cluster name to join")
 
 	clusterCmd.AddCommand(joinCmd)
 
@@ -66,6 +67,16 @@ func clusterCreate(cmd *cobra.Command, args []string) {
 
 	clusterName := args[0]
 	fmt.Printf("Creating cluster %v\n", clusterName)
+	fmt.Printf("Step 1. create certificates\n")
+
+	// create cert files
+	cfg := &admapi.MasterConfiguration{CertificatesDir: "~/.cloud10x/certs"}
+
+	err := certs.CreatePKIAssets(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating cert files %v", err)
+		os.Exit(-1)
+	}
 
 	req := v1.ClusterCreateReq{
 		Name: clusterName,
@@ -88,7 +99,7 @@ func clusterCreate(cmd *cobra.Command, args []string) {
 	fmt.Printf("Cluster created, token: %s", r.Token)
 }
 
-func clusterJoin(cmd *cobra.Command, args []string, publicAddr string) {
-	clusterName := args[1]
-	fmt.Printf("Joined cluster %s", clusterName)
+func clusterJoin(cmd *cobra.Command, args []string, clusterName string) {
+	ipAddress := args[1]
+	fmt.Printf("Joined cluster %s for %s.\n", clusterName, ipAddress)
 }
