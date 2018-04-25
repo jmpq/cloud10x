@@ -4,13 +4,18 @@ import (
 	//"bytes"
 	"encoding/json"
 	"fmt"
-	admapi "github.com/jmpq/cloud10x/adm/api"
-	"github.com/jmpq/cloud10x/adm/certs"
+	//"github.com/jmpq/cloud10x/adm/certs"
 	"github.com/jmpq/cloud10x/v1"
 	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
+	kubeadmapiext "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1alpha1"
+	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	"os"
+)
+
+var (
+	cfg *kubeadmapiext.MasterConfiguration
 )
 
 func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
@@ -23,6 +28,18 @@ func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
 	clusterCmd.Flags().StringVar(&gTenantName, "tenant", gTenantName, "The tenant's name")
 	clusterCmd.Flags().StringVar(&gTenantSecret, "secret", gTenantSecret, "Tenant's secret")
 
+	// Cluster create
+
+	//FIXME, why can't find this line in kubeadm but it works ?
+	kubeadmapiext.RegisterDefaults(legacyscheme.Scheme)
+	cfg = &kubeadmapiext.MasterConfiguration{}
+
+	// Default values for the cobra help text
+	legacyscheme.Scheme.Default(cfg)
+
+	var (
+		cfgPath string
+	)
 	createCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a cluster",
@@ -31,9 +48,17 @@ func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
 				fmt.Fprintf(os.Stderr, "Please specify the cluster's name\n")
 				os.Exit(-1)
 			}
-			clusterCreate(cmd, args)
+			clusterCreate(cmd, args, &cfgPath, cfg)
 		},
 	}
+
+	// Add flags to the command
+	createCmd.Flags().StringVar(&cfgPath, "config", cfgPath, "Path to config file (WARNING: Usage of a configuration file is experimental)")
+	createCmd.Flags().StringVar(&cfg.CertificatesDir, "cert-dir", cfg.CertificatesDir, "The path where to save the certificates")
+	createCmd.Flags().StringVar(&cfg.Networking.DNSDomain, "service-dns-domain", cfg.Networking.DNSDomain, "Alternative domain for services, to use for the API server serving cert")
+	createCmd.Flags().StringVar(&cfg.Networking.ServiceSubnet, "service-cidr", cfg.Networking.ServiceSubnet, "Alternative range of IP address for service VIPs, from which derives the internal API server VIP that will be added to the API Server serving cert")
+	createCmd.Flags().StringSliceVar(&cfg.APIServerCertSANs, "apiserver-cert-extra-sans", []string{}, "Optional extra altnames to use for the API server serving cert. Can be both IP addresses and dns names")
+	createCmd.Flags().StringVar(&cfg.API.AdvertiseAddress, "apiserver-advertise-address", cfg.API.AdvertiseAddress, "The IP address the API server is accessible on, to use for the API server serving cert")
 
 	clusterCmd.AddCommand(createCmd)
 
@@ -60,7 +85,7 @@ func NewCmdCluster(in io.Reader, out, err io.Writer) *cobra.Command {
 	return clusterCmd
 }
 
-func clusterCreate(cmd *cobra.Command, args []string) {
+func clusterCreate(cmd *cobra.Command, args []string, cfgPath *string, cfg *kubeadmapiext.MasterConfiguration) {
 	url := gRemoteUrl
 	tenant := gTenantName
 	secret := gTenantSecret
@@ -70,9 +95,7 @@ func clusterCreate(cmd *cobra.Command, args []string) {
 	fmt.Printf("Step 1. create certificates\n")
 
 	// create cert files
-	cfg := &admapi.MasterConfiguration{CertificatesDir: "~/.cloud10x/certs"}
-
-	err := certs.CreatePKIAssets(cfg)
+	err := createPKIAssets(cmd, args, cfgPath, cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating cert files %v", err)
 		os.Exit(-1)
